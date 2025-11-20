@@ -107,35 +107,30 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Animated background circles */}
-      <div className="absolute top-20 left-20 w-72 h-72 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
-      <div className="absolute top-40 right-20 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
-      <div className="absolute -bottom-8 left-40 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
-
-      <main className="w-full max-w-4xl relative z-10 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+      <main className="w-full max-w-4xl py-8">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-3 animate-gradient drop-shadow-lg">
-            ⏰ Arbeitszeit Rechner
+        <div className="text-center mb-12">
+          <h1 className="text-5xl md:text-6xl font-bold text-white mb-4 tracking-tight">
+            Arbeitszeit Rechner
           </h1>
-          <p className="text-white/90 text-lg drop-shadow">
-            Gib deine Startzeit ein und starte deine Countdowns!
+          <p className="text-slate-400 text-lg">
+            Gib deine Startzeit ein und starte deine Countdowns
           </p>
         </div>
 
         {/* Calculator Card */}
-        <div className="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl p-8 md:p-12 mb-8">
+        <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 p-8 md:p-12 mb-8">
           {/* Input Section */}
-          <div className="mb-8">
-            <label className="block text-lg font-semibold text-gray-700 mb-3">
-              🕐 Startzeit
+          <div className="mb-10">
+            <label className="block text-sm font-medium text-slate-300 mb-3 uppercase tracking-wide">
+              Startzeit
             </label>
             <input
               type="time"
               value={startTime}
               onChange={(e) => setStartTime(e.target.value)}
-              className="w-full px-6 py-4 text-2xl font-semibold text-gray-800 bg-gradient-to-r from-purple-50 to-pink-50 border-3 border-purple-300 rounded-2xl focus:outline-none focus:ring-4 focus:ring-purple-400 focus:border-transparent transition-all duration-300 shadow-md hover:shadow-lg"
+              className="w-full px-6 py-4 text-2xl font-medium text-white bg-slate-900/50 border border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
             />
           </div>
 
@@ -143,18 +138,18 @@ export default function Home() {
           {startTime && (
             <div className={`space-y-4 transition-all duration-500 ${isAnimating ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
               {/* Minimum Time */}
-              <div className="bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-2xl p-6 shadow-lg transform hover:scale-[1.02] transition-all duration-300 hover:shadow-xl">
+              <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-6 hover:border-blue-500/50 transition-all duration-300">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex-1">
-                    <p className="text-white text-sm font-semibold mb-1 flex items-center gap-2">
-                      ✅ Mindestarbeitszeit (7,6h)
+                    <p className="text-slate-300 text-sm font-medium mb-1 uppercase tracking-wide">
+                      Mindestarbeitszeit (7,6h)
                     </p>
-                    <p className="text-white/80 text-xs">
+                    <p className="text-slate-500 text-xs">
                       inkl. 30 Min Pause
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-4xl font-bold text-white">
+                    <p className="text-4xl font-bold text-white font-mono">
                       {minEndTime}
                     </p>
                   </div>
@@ -162,25 +157,25 @@ export default function Home() {
                 <button
                   onClick={() => startCountdown('min')}
                   disabled={countdowns.some(c => c.type === 'min')}
-                  className="w-full bg-white/20 hover:bg-white/30 disabled:bg-white/10 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2"
+                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 disabled:cursor-not-allowed text-white font-medium py-3 rounded-lg transition-all duration-200"
                 >
-                  {countdowns.some(c => c.type === 'min') ? '✓ Countdown läuft' : '⏱️ Countdown starten'}
+                  {countdowns.some(c => c.type === 'min') ? 'Countdown läuft' : 'Countdown starten'}
                 </button>
               </div>
 
               {/* Maximum Time */}
-              <div className="bg-gradient-to-r from-orange-400 to-rose-400 rounded-2xl p-6 shadow-lg transform hover:scale-[1.02] transition-all duration-300 hover:shadow-xl">
+              <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-6 hover:border-purple-500/50 transition-all duration-300">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex-1">
-                    <p className="text-white text-sm font-semibold mb-1 flex items-center gap-2">
-                      🔥 Maximalarbeitszeit (9h)
+                    <p className="text-slate-300 text-sm font-medium mb-1 uppercase tracking-wide">
+                      Maximalarbeitszeit (9h)
                     </p>
-                    <p className="text-white/80 text-xs">
+                    <p className="text-slate-500 text-xs">
                       inkl. 30 Min Pause
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-4xl font-bold text-white">
+                    <p className="text-4xl font-bold text-white font-mono">
                       {maxEndTime}
                     </p>
                   </div>
@@ -188,16 +183,16 @@ export default function Home() {
                 <button
                   onClick={() => startCountdown('max')}
                   disabled={countdowns.some(c => c.type === 'max')}
-                  className="w-full bg-white/20 hover:bg-white/30 disabled:bg-white/10 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2"
+                  className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-slate-700 disabled:cursor-not-allowed text-white font-medium py-3 rounded-lg transition-all duration-200"
                 >
-                  {countdowns.some(c => c.type === 'max') ? '✓ Countdown läuft' : '⏱️ Countdown starten'}
+                  {countdowns.some(c => c.type === 'max') ? 'Countdown läuft' : 'Countdown starten'}
                 </button>
               </div>
 
               {/* Info Box */}
-              <div className="bg-gradient-to-r from-blue-100 to-purple-100 rounded-2xl p-5 border-2 border-blue-200">
-                <p className="text-sm text-gray-700 text-center">
-                  ⏳ <strong>Hinweis:</strong> Die 30 Minuten Pause sind bereits eingerechnet
+              <div className="bg-slate-900/30 border border-slate-700/30 rounded-xl p-4">
+                <p className="text-sm text-slate-400 text-center">
+                  <strong className="text-slate-300">Hinweis:</strong> Die 30 Minuten Pause sind bereits eingerechnet
                 </p>
               </div>
             </div>
@@ -205,10 +200,14 @@ export default function Home() {
 
           {/* Empty State */}
           {!startTime && (
-            <div className="text-center py-12 animate-bounce-slow">
-              <div className="text-6xl mb-4">🚀</div>
-              <p className="text-gray-500 text-lg">
-                Wähle eine Startzeit, um loszulegen!
+            <div className="text-center py-16">
+              <div className="w-16 h-16 bg-slate-700/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <p className="text-slate-400 text-lg">
+                Wähle eine Startzeit, um loszulegen
               </p>
             </div>
           )}
@@ -216,49 +215,46 @@ export default function Home() {
 
         {/* Active Countdowns */}
         {countdowns.length > 0 && (
-          <div className="space-y-4">
-            <h2 className="text-2xl font-bold text-white text-center mb-4 drop-shadow-lg">
-              🎯 Aktive Countdowns
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-white text-center mb-6">
+              Aktive Countdowns
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {countdowns.map((countdown) => (
                 <div
                   key={countdown.id}
-                  className={`bg-gradient-to-r ${countdown.type === 'min' ? 'from-emerald-400 to-cyan-400' : 'from-orange-400 to-rose-400'} rounded-3xl p-6 shadow-xl transform hover:scale-105 transition-all duration-300 hover:shadow-2xl ${countdown.isFinished ? 'animate-pulse-slow' : ''}`}
+                  className={`bg-slate-800/50 backdrop-blur-xl border ${countdown.type === 'min' ? 'border-blue-500/50' : 'border-purple-500/50'} rounded-xl p-6 hover:shadow-xl transition-all duration-300`}
                 >
-                  <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-start justify-between mb-6">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-2xl">{countdown.type === 'min' ? '✅' : '🔥'}</span>
-                        <h3 className="text-xl font-bold text-white">
-                          {countdown.type === 'min' ? 'Mindestzeit' : 'Maximalzeit'}
-                        </h3>
-                      </div>
-                      <p className="text-white/80 text-sm">
-                        Zielzeit: {countdown.targetTime}
+                      <h3 className="text-lg font-semibold text-white mb-2">
+                        {countdown.type === 'min' ? 'Mindestzeit' : 'Maximalzeit'}
+                      </h3>
+                      <p className="text-slate-400 text-sm">
+                        Zielzeit: <span className="text-white font-mono">{countdown.targetTime}</span>
                       </p>
-                      <p className="text-white/70 text-xs mt-1">
+                      <p className="text-slate-500 text-xs mt-1">
                         {countdown.type === 'min' ? '7,6h + 30 Min' : '9h + 30 Min'}
                       </p>
                     </div>
                     <button
                       onClick={() => deleteCountdown(countdown.id)}
-                      className="bg-white/20 hover:bg-white/30 text-white rounded-full w-8 h-8 flex items-center justify-center transition-all"
+                      className="bg-slate-700/50 hover:bg-slate-600 text-slate-300 rounded-lg w-9 h-9 flex items-center justify-center transition-all"
                     >
                       ✕
                     </button>
                   </div>
 
-                  <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-4 text-center">
+                  <div className="bg-slate-900/50 rounded-lg p-6 text-center border border-slate-700/50">
                     {countdown.isFinished ? (
                       <div>
-                        <p className="text-white font-bold text-2xl mb-1">🎉 Fertig!</p>
-                        <p className="text-white/90 text-sm">Du kannst jetzt gehen!</p>
+                        <p className="text-green-400 font-bold text-2xl mb-1">Fertig!</p>
+                        <p className="text-slate-400 text-sm">Du kannst jetzt gehen</p>
                       </div>
                     ) : (
                       <div>
-                        <p className="text-white/90 text-sm mb-1">Noch:</p>
-                        <p className="text-white font-bold text-5xl font-mono tracking-wide">
+                        <p className="text-slate-400 text-xs uppercase tracking-wider mb-2">Verbleibende Zeit</p>
+                        <p className="text-white font-bold text-5xl font-mono tracking-wider">
                           {countdown.timeRemaining}
                         </p>
                       </div>
