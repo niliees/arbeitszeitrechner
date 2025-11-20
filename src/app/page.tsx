@@ -28,6 +28,7 @@ export default function Home() {
   // Calculate end times when start time changes
   useEffect(() => {
     if (startTime) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsAnimating(true);
       const timer = setTimeout(() => setIsAnimating(false), 500);
 
@@ -116,7 +117,7 @@ export default function Home() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-3 animate-gradient drop-shadow-lg">
-            ⏰ Arbeitszeit-Rechner
+            ⏰ Arbeitszeit Rechner
           </h1>
           <p className="text-white/90 text-lg drop-shadow">
             Gib deine Startzeit ein und starte deine Countdowns!
