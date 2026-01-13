@@ -292,7 +292,7 @@ export default function Home() {
                         <p className="text-slate-400 text-xs uppercase tracking-wider mb-2">
                           {countdown.isOvertime ? 'Überzeit' : 'Verbleibende Zeit'}
                         </p>
-                        <p className="text-white font-bold text-5xl font-mono tracking-wider">
+                        <p className={`font-bold text-5xl font-mono tracking-wider ${countdown.type === 'min' && countdown.isOvertime ? 'text-green-400' : 'text-white'}`}>
                           {countdown.timeRemaining}
                         </p>
                       </div>
