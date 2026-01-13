@@ -2,27 +2,22 @@
 
 import { useState, useEffect } from "react";
 
-interface Countdown {
+interface Pause {
   id: string;
-  type: 'min' | 'max';
-  targetTime: string;     // Anzeige (HH:MM)
-  targetAt: number;       // Timestamp (ms)
-  timeRemaining: string;  // "HH:MM:SS" oder "+HH:MM:SS"
-  isFinished: boolean;    // nur für max relevant
-  isOvertime?: boolean;   // nur für min relevant
+  time: number; // Timestamp (ms)
+  label: string;
 }
 
 export default function Home() {
   const [startTime, setStartTime] = useState("");
-  const [minEndTime, setMinEndTime] = useState("");
-  const [maxEndTime, setMaxEndTime] = useState("");
-
+  const [started, setStarted] = useState(false);
   const [minEndAt, setMinEndAt] = useState<number | null>(null);
-  const [maxEndAt, setMaxEndAt] = useState<number | null>(null);
+  const [pauses, setPauses] = useState<Pause[]>([]);
+  const [now, setNow] = useState(Date.now());
+  const [isOvertime, setIsOvertime] = useState(false);
+  const [showOvertime, setShowOvertime] = useState(false);
 
-  const [countdowns, setCountdowns] = useState<Countdown[]>([]);
-  const [isAnimating, setIsAnimating] = useState(false);
-
+  // Zeitformatierer
   const formatTimeHHMM = (date: Date) => {
     return date.toLocaleTimeString('de-DE', {
       hour: '2-digit',
@@ -30,7 +25,6 @@ export default function Home() {
       hour12: false
     });
   };
-
   const formatHMS = (totalSeconds: number) => {
     const sec = Math.floor(Math.abs(totalSeconds));
     const h = String(Math.floor(sec / 3600)).padStart(2, '0');
@@ -39,268 +33,214 @@ export default function Home() {
     return `${h}:${m}:${s}`;
   };
 
-  // Calculate end times when start time changes
+  // Endzeit berechnen, wenn Startzeit gesetzt
   useEffect(() => {
     if (startTime) {
-      setIsAnimating(true);
-      const timer = setTimeout(() => setIsAnimating(false), 500);
-
       const [hours, minutes] = startTime.split(':').map(Number);
       const startDate = new Date();
       startDate.setHours(hours, minutes, 0, 0);
-
-      // Minimum: 7.6 Stunden Arbeit + 30 Min Pause = 8.1 Stunden
+      // 7.6h Arbeit + 30min Pause = 8.1h
       const minDate = new Date(startDate.getTime() + (7.6 * 60 + 30) * 60 * 1000);
-
-      // Maximum: 9 Stunden Arbeit + 30 Min Pause = 9.5 Stunden
-      const maxDate = new Date(startDate.getTime() + (9 * 60 + 30) * 60 * 1000);
-
       setMinEndAt(minDate.getTime());
-      setMaxEndAt(maxDate.getTime());
-
-      setMinEndTime(formatTimeHHMM(minDate));
-      setMaxEndTime(formatTimeHHMM(maxDate));
-
-      return () => clearTimeout(timer);
     } else {
-      setMinEndTime("");
-      setMaxEndTime("");
       setMinEndAt(null);
-      setMaxEndAt(null);
-      setCountdowns([]);
+      setPauses([]);
+      setStarted(false);
+      setShowOvertime(false);
     }
   }, [startTime]);
 
-  // Update countdown timers every second
+  // Zeit-Update für Pfeil und Überzeit
   useEffect(() => {
-    if (countdowns.length === 0) return;
-
+    if (!started) return;
     const interval = setInterval(() => {
-      setCountdowns(prev => prev.map(countdown => {
-        const now = Date.now();
-        const diffMs = countdown.targetAt - now;
-
-        // Abgelaufen
-        if (diffMs <= 0) {
-          // Mindestzeit: ins Plus zählen
-          if (countdown.type === 'min') {
-            const overtimeSec = Math.floor((now - countdown.targetAt) / 1000);
-            return {
-              ...countdown,
-              timeRemaining: `+${formatHMS(overtimeSec)}`,
-              isFinished: false,
-              isOvertime: true,
-            };
-          }
-
-          // Maximalzeit: bleibt "Fertig"
-          return { ...countdown, timeRemaining: '00:00:00', isFinished: true, isOvertime: false };
-        }
-
-        // Läuft noch: normaler Countdown
-        const secondsLeft = Math.floor(diffMs / 1000);
-        return {
-          ...countdown,
-          timeRemaining: formatHMS(secondsLeft),
-          isFinished: false,
-          isOvertime: false,
-        };
-      }));
+      setNow(Date.now());
     }, 1000);
-
     return () => clearInterval(interval);
-  }, [countdowns.length]);
+  }, [started]);
 
-  const startCountdown = (type: 'min' | 'max') => {
-    const existingCountdown = countdowns.find(c => c.type === type);
-    if (existingCountdown) return;
+  // Überzeit-Status prüfen
+  useEffect(() => {
+    if (!minEndAt || !started) return;
+    if (now > minEndAt) {
+      setIsOvertime(true);
+      setShowOvertime(true);
+    } else {
+      setIsOvertime(false);
+    }
+  }, [now, minEndAt, started]);
 
-    const targetAt = type === 'min' ? minEndAt : maxEndAt;
-    const targetTime = type === 'min' ? minEndTime : maxEndTime;
-
-    if (!targetAt || !targetTime) return;
-
-    const now = Date.now();
-    const diffMs = targetAt - now;
-
-    const countdown: Countdown = {
-      id: Date.now().toString(),
-      type,
-      targetTime,
-      targetAt,
-      timeRemaining: diffMs <= 0
-        ? (type === 'min' ? `+${formatHMS(Math.floor((now - targetAt) / 1000))}` : '00:00:00')
-        : formatHMS(Math.floor(diffMs / 1000)),
-      isFinished: diffMs <= 0 && type === 'max',
-      isOvertime: diffMs <= 0 && type === 'min',
-    };
-
-    setCountdowns([...countdowns, countdown]);
+  // Pause hinzufügen
+  const addPause = () => {
+    if (!started) return;
+    setPauses([
+      ...pauses,
+      {
+        id: Date.now().toString(),
+        time: now,
+        label: `Pause ${pauses.length + 1}`,
+      },
+    ]);
   };
 
-  const deleteCountdown = (id: string) => {
-    setCountdowns(countdowns.filter(c => c.id !== id));
+  // SVG Timeline Parameter
+  const getTimelineData = () => {
+    if (!startTime || !minEndAt) return null;
+    const [hours, minutes] = startTime.split(':').map(Number);
+    const startDate = new Date();
+    startDate.setHours(hours, minutes, 0, 0);
+    const startAt = startDate.getTime();
+    const endAt = minEndAt;
+    const total = endAt - startAt;
+    // Für Überzeit: Timeline nach rechts verlängern
+    let overtime = 0;
+    if (showOvertime && now > endAt) {
+      overtime = now - endAt;
+    }
+    return { startAt, endAt, total, overtime };
   };
+
+  // Position auf Timeline (0...1)
+  const getPosition = (t: number, timeline: {startAt: number, endAt: number, total: number, overtime: number}) => {
+    if (t < timeline.startAt) return 0;
+    if (timeline.overtime && t > timeline.endAt) {
+      // Überzeitbereich: skaliert nach rechts
+      return 0.5 + 0.5 * Math.min(1, (t - timeline.endAt) / (timeline.overtime || 1));
+    }
+    if (t > timeline.endAt) return 1;
+    return (t - timeline.startAt) / timeline.total * 0.5;
+  };
+
+  // SVG-Path für Kurve (quadratische Bezier)
+  const getCurvePath = (width: number, height: number) => {
+    const x0 = 0, y0 = height * 0.7;
+    const x1 = width, y1 = height * 0.7;
+    const cx = width / 2, cy = height * 0.1;
+    return `M${x0},${y0} Q${cx},${cy} ${x1},${y1}`;
+  };
+
+  // Render
+  if (!started) {
+    // Startscreen
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+        <main className="w-full max-w-md py-8">
+          <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 p-8 md:p-12 mb-8">
+            <h1 className="text-4xl font-bold text-white mb-6 text-center">Arbeitszeit Rechner</h1>
+            <label className="block text-sm font-medium text-slate-300 mb-3 uppercase tracking-wide">Startzeit</label>
+            <input
+              type="time"
+              value={startTime}
+              onChange={e => setStartTime(e.target.value)}
+              className="w-full px-6 py-4 text-2xl font-medium text-white bg-slate-900/50 border border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 mb-6"
+            />
+            <button
+              onClick={() => startTime && setStarted(true)}
+              disabled={!startTime}
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 disabled:cursor-not-allowed text-white font-medium py-3 rounded-lg transition-all duration-200"
+            >
+              Start
+            </button>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Timeline-Ansicht
+  const timeline = getTimelineData();
+  if (!timeline) return null;
+  const width = 700;
+  const height = 180;
+  const startDate = new Date(timeline.startAt);
+  const endDate = new Date(timeline.endAt);
+  const overtimeDate = new Date(now);
+  // Marker für Start, Ende, Pausen, Jetzt
+  const startPos = getPosition(timeline.startAt, timeline);
+  const endPos = getPosition(timeline.endAt, timeline);
+  const nowPos = getPosition(now, timeline);
+  const overtimePos = showOvertime ? getPosition(now, timeline) : null;
+  // Pausen-Positionen
+  const pauseMarkers = pauses.map(p => ({
+    ...p,
+    pos: getPosition(p.time, timeline)
+  }));
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
       <main className="w-full max-w-4xl py-8">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-5xl md:text-6xl font-bold text-white mb-4 tracking-tight">
-            Arbeitszeit Rechner
-          </h1>
-          <p className="text-slate-400 text-lg">
-            Gib deine Startzeit ein und starte deine Countdowns
-          </p>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-white">Arbeitszeit Timeline</h1>
+          <button
+            onClick={addPause}
+            className="bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200"
+          >
+            Pause hinzufügen
+          </button>
         </div>
-
-        {/* Calculator Card */}
-        <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 p-8 md:p-12 mb-8">
-          {/* Input Section */}
-          <div className="mb-10">
-            <label className="block text-sm font-medium text-slate-300 mb-3 uppercase tracking-wide">
-              Startzeit
-            </label>
-            <input
-              type="time"
-              value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
-              className="w-full px-6 py-4 text-2xl font-medium text-white bg-slate-900/50 border border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-            />
+        <div className="relative flex flex-col items-center">
+          <svg width={width} height={height} className="block mx-auto">
+            {/* Kurvige Linie */}
+            <path d={getCurvePath(width, height)} stroke="#64748b" strokeWidth={6} fill="none" />
+            {/* Startpunkt */}
+            <circle cx={startPos * width} cy={height * 0.7} r={14} fill="#2563eb" stroke="#fff" strokeWidth={3} />
+            {/* Endpunkt */}
+            <circle cx={endPos * width} cy={height * 0.7} r={14} fill="#a21caf" stroke="#fff" strokeWidth={3} />
+            {/* Pausenmarker */}
+            {pauseMarkers.map(p => (
+              <g key={p.id}>
+                <circle cx={p.pos * width} cy={height * 0.7 - 30} r={10} fill="#facc15" stroke="#fff" strokeWidth={2} />
+                <text x={p.pos * width} y={height * 0.7 - 45} textAnchor="middle" fontSize={12} fill="#facc15">{p.label}</text>
+              </g>
+            ))}
+            {/* Jetzt-Pfeil (Google Maps Stil) */}
+            <g transform={`translate(${nowPos * width},${height * 0.7 - 20})`}>
+              <polygon points="0,0 10,30 -10,30" fill="#38bdf8" stroke="#0ea5e9" strokeWidth={2} />
+            </g>
+            {/* Überzeitbereich */}
+            {showOvertime && overtimePos && (
+              <rect x={width * 0.5} y={height * 0.7 - 8} width={width * (overtimePos - 0.5)} height={16} fill="#22c55e" opacity={0.2} />
+            )}
+          </svg>
+          <div className="flex justify-between w-full px-2 mt-2">
+            <div className="text-left">
+              <div className="text-slate-400 text-xs uppercase">Start</div>
+              <div className="text-white font-mono text-lg">{formatTimeHHMM(startDate)}</div>
+            </div>
+            <div className="text-center">
+              {showOvertime ? (
+                <>
+                  <div className="text-slate-400 text-xs uppercase">Ende</div>
+                  <div className="text-white font-mono text-lg">{formatTimeHHMM(endDate)}</div>
+                </>
+              ) : null}
+            </div>
+            <div className="text-right">
+              {showOvertime ? (
+                <>
+                  <div className="text-green-400 text-xs uppercase">+ Zeit</div>
+                  <div className="text-green-400 font-mono text-lg">+{formatHMS(Math.floor((now - timeline.endAt) / 1000))}</div>
+                </>
+              ) : (
+                <>
+                  <div className="text-slate-400 text-xs uppercase">Ende</div>
+                  <div className="text-white font-mono text-lg">{formatTimeHHMM(endDate)}</div>
+                </>
+              )}
+            </div>
           </div>
-
-          {/* Results Section */}
-          {startTime && (
-            <div className={`space-y-4 transition-all duration-500 ${isAnimating ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
-              {/* Minimum Time */}
-              <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-6 hover:border-blue-500/50 transition-all duration-300">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex-1">
-                    <p className="text-slate-300 text-sm font-medium mb-1 uppercase tracking-wide">
-                      Mindestarbeitszeit (7,6h)
-                    </p>
-                    <p className="text-slate-500 text-xs">
-                      inkl. 30 Min Pause
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-4xl font-bold text-white font-mono">
-                      {minEndTime}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => startCountdown('min')}
-                  disabled={countdowns.some(c => c.type === 'min')}
-                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 disabled:cursor-not-allowed text-white font-medium py-3 rounded-lg transition-all duration-200"
-                >
-                  {countdowns.some(c => c.type === 'min') ? 'Countdown läuft' : 'Countdown starten'}
-                </button>
-              </div>
-
-              {/* Maximum Time */}
-              <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-6 hover:border-purple-500/50 transition-all duration-300">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex-1">
-                    <p className="text-slate-300 text-sm font-medium mb-1 uppercase tracking-wide">
-                      Maximalarbeitszeit (9h)
-                    </p>
-                    <p className="text-slate-500 text-xs">
-                      inkl. 30 Min Pause
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-4xl font-bold text-white font-mono">
-                      {maxEndTime}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => startCountdown('max')}
-                  disabled={countdowns.some(c => c.type === 'max')}
-                  className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-slate-700 disabled:cursor-not-allowed text-white font-medium py-3 rounded-lg transition-all duration-200"
-                >
-                  {countdowns.some(c => c.type === 'max') ? 'Countdown läuft' : 'Countdown starten'}
-                </button>
-              </div>
-
-              {/* Info Box */}
-              <div className="bg-slate-900/30 border border-slate-700/30 rounded-xl p-4">
-                <p className="text-sm text-slate-400 text-center">
-                  <strong className="text-slate-300">Hinweis:</strong> Die 30 Minuten Pause sind bereits eingerechnet
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Empty State */}
-          {!startTime && (
-            <div className="text-center py-16">
-              <div className="w-16 h-16 bg-slate-700/50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <p className="text-slate-400 text-lg">
-                Wähle eine Startzeit, um loszulegen
-              </p>
-            </div>
-          )}
         </div>
-
-        {/* Active Countdowns */}
-        {countdowns.length > 0 && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-white text-center mb-6">
-              Aktive Countdowns
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {countdowns.map((countdown) => (
-                <div
-                  key={countdown.id}
-                  className={`bg-slate-800/50 backdrop-blur-xl border ${countdown.type === 'min' ? 'border-blue-500/50' : 'border-purple-500/50'} rounded-xl p-6 hover:shadow-xl transition-all duration-300`}
-                >
-                  <div className="flex items-start justify-between mb-6">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-white mb-2">
-                        {countdown.type === 'min' ? 'Mindestzeit' : 'Maximalzeit'}
-                      </h3>
-                      <p className="text-slate-400 text-sm">
-                        Zielzeit: <span className="text-white font-mono">{countdown.targetTime}</span>
-                      </p>
-                      <p className="text-slate-500 text-xs mt-1">
-                        {countdown.type === 'min' ? '7,6h + 30 Min' : '9h + 30 Min'}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => deleteCountdown(countdown.id)}
-                      className="bg-slate-700/50 hover:bg-slate-600 text-slate-300 rounded-lg w-9 h-9 flex items-center justify-center transition-all"
-                    >
-                      ✕
-                    </button>
-                  </div>
-
-                  <div className="bg-slate-900/50 rounded-lg p-6 text-center border border-slate-700/50">
-                    {countdown.isFinished ? (
-                      <div>
-                        <p className="text-green-400 font-bold text-2xl mb-1">Fertig!</p>
-                        <p className="text-slate-400 text-sm">Du kannst jetzt gehen</p>
-                      </div>
-                    ) : (
-                      <div>
-                        <p className="text-slate-400 text-xs uppercase tracking-wider mb-2">
-                          {countdown.isOvertime ? 'Überzeit' : 'Verbleibende Zeit'}
-                        </p>
-                        <p className={`font-bold text-5xl font-mono tracking-wider ${countdown.type === 'min' && countdown.isOvertime ? 'text-green-400' : 'text-white'}`}>
-                          {countdown.timeRemaining}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
+        {/* Pausenliste */}
+        {pauses.length > 0 && (
+          <div className="mt-8 bg-slate-800/60 rounded-xl p-4">
+            <div className="text-slate-300 font-semibold mb-2">Pausen</div>
+            <ul className="space-y-1">
+              {pauses.map(p => (
+                <li key={p.id} className="text-slate-400 text-sm">
+                  {p.label}: {formatTimeHHMM(new Date(p.time))}
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
         )}
       </main>
