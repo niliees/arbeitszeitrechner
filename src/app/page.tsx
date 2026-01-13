@@ -1,12 +1,6 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "shadcn/ui/card";
-import { Button } from "shadcn/ui/button";
-import { Input } from "shadcn/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "shadcn/ui/dialog";
-import { Badge } from "shadcn/ui/badge";
-import { cn } from "shadcn/ui";
 
 interface Pause {
   id: string;
@@ -142,29 +136,27 @@ export default function Home() {
     // Startscreen
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md shadow-2xl border-0 bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur-xl">
-          <CardHeader>
-            <CardTitle className="text-4xl font-bold text-center text-white tracking-tight">Arbeitszeit Rechner</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="w-full max-w-md shadow-2xl border-0 bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur-xl rounded-2xl">
+          <div className="p-8 pb-0">
+            <h1 className="text-4xl font-bold text-center text-white tracking-tight mb-6">Arbeitszeit Rechner</h1>
             <label className="block text-sm font-medium text-slate-300 mb-2 uppercase tracking-wide">Startzeit</label>
-            <Input
+            <input
               type="time"
               value={startTime}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setStartTime(e.target.value)}
+              onChange={(e) => setStartTime(e.target.value)}
               className="w-full px-6 py-4 text-2xl font-medium text-white bg-slate-900/70 border border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 mb-6"
             />
-          </CardContent>
-          <CardFooter>
-            <Button
+          </div>
+          <div className="p-8 pt-0">
+            <button
               onClick={() => startTime && setStarted(true)}
               disabled={!startTime}
-              className="w-full text-lg py-3 rounded-lg"
+              className="w-full text-lg py-3 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 disabled:cursor-not-allowed text-white font-medium transition-all duration-200"
             >
               Start
-            </Button>
-          </CardFooter>
-        </Card>
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -182,54 +174,53 @@ export default function Home() {
   const nowPos = getPosition(now, timeline);
   const overtimePos = showOvertime ? getPosition(now, timeline) : null;
   // Pausen-Positionen
-  const pauseMarkers = pauses.map((p: Pause) => ({
+  const pauseMarkers = pauses.map((p) => ({
     ...p,
     pos: getPosition(p.time, timeline)
   }));
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
-      <Card className="w-full max-w-4xl shadow-2xl border-0 bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur-xl">
-        <CardHeader className="flex flex-row items-center justify-between gap-4">
-          <CardTitle className="text-3xl font-bold text-white">Arbeitszeit Timeline</CardTitle>
-          <Button
+      <div className="w-full max-w-4xl shadow-2xl border-0 bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur-xl rounded-2xl">
+        <div className="flex flex-row items-center justify-between gap-4 p-8 pb-0">
+          <h2 className="text-3xl font-bold text-white">Arbeitszeit Timeline</h2>
+          <button
             onClick={handleAddPauseClick}
             className="bg-yellow-500 hover:bg-yellow-600 text-white font-medium px-4 py-2 rounded-lg text-base shadow-lg"
           >
             Pause hinzufügen
-          </Button>
-        </CardHeader>
-        <CardContent>
+          </button>
+        </div>
+        <div className="p-8 pt-0">
           {/* Pausenformular als Dialog */}
-          <Dialog open={showPauseForm} onOpenChange={setShowPauseForm}>
-            <DialogContent className="bg-slate-900 border-slate-700">
-              <DialogHeader>
-                <DialogTitle>Pausenzeit wählen</DialogTitle>
-              </DialogHeader>
-              <Input
-                type="time"
-                value={pauseTime}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPauseTime(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg bg-slate-900 text-white border border-slate-700 mb-4"
-              />
-              <DialogFooter className="flex gap-2">
-                <Button
-                  onClick={handlePauseSave}
-                  disabled={!pauseTime}
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg disabled:bg-slate-700"
-                >
-                  Speichern
-                </Button>
-                <Button
-                  variant="secondary"
-                  onClick={() => setShowPauseForm(false)}
-                  className="bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded-lg"
-                >
-                  Abbrechen
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          {showPauseForm && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+              <div className="bg-slate-900 border border-slate-700 rounded-xl p-8 w-full max-w-xs shadow-2xl">
+                <h3 className="text-lg font-bold text-white mb-4">Pausenzeit wählen</h3>
+                <input
+                  type="time"
+                  value={pauseTime}
+                  onChange={(e) => setPauseTime(e.target.value)}
+                  className="w-full px-4 py-2 rounded-lg bg-slate-900 text-white border border-slate-700 mb-4"
+                />
+                <div className="flex gap-2 justify-end">
+                  <button
+                    onClick={handlePauseSave}
+                    disabled={!pauseTime}
+                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg disabled:bg-slate-700"
+                  >
+                    Speichern
+                  </button>
+                  <button
+                    onClick={() => setShowPauseForm(false)}
+                    className="bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded-lg"
+                  >
+                    Abbrechen
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Timeline SVG */}
           <div className="relative flex flex-col items-center mt-2 mb-8">
@@ -241,7 +232,7 @@ export default function Home() {
               {/* Endpunkt */}
               <circle cx={endPos * width} cy={height * 0.7} r={16} fill="#a21caf" stroke="#fff" strokeWidth={4} />
               {/* Pausenmarker */}
-              {pauseMarkers.map((p: Pause) => (
+              {pauseMarkers.map((p) => (
                 <g key={p.id}>
                   <circle cx={p.pos * width} cy={height * 0.7 - 35} r={12} fill="#facc15" stroke="#fff" strokeWidth={3} />
                   <text x={p.pos * width} y={height * 0.7 - 50} textAnchor="middle" fontSize={14} fill="#facc15" fontWeight="bold">{p.label}</text>
@@ -249,7 +240,7 @@ export default function Home() {
               ))}
               {/* Jetzt-Pfeil (Google Maps Stil) */}
               <g transform={`translate(${nowPos * width},${height * 0.7 - 25})`}>
-                <polygon points="0,0 13,38 -13,38" fill="#38bdf8" stroke="#0ea5e9" strokeWidth={3} filter="drop-shadow(0 2px 6px #0ea5e9)" />
+                <polygon points="0,0 13,38 -13,38" fill="#38bdf8" stroke="#0ea5e9" strokeWidth={3} />
               </g>
               {/* Überzeitbereich */}
               {showOvertime && overtimePos && (
@@ -289,10 +280,10 @@ export default function Home() {
           {pauses.length > 0 && (
             <div className="mt-8 bg-slate-800/60 rounded-xl p-4 shadow-xl">
               <div className="text-slate-300 font-semibold mb-2 flex items-center gap-2">
-                <Badge variant="outline" className="bg-yellow-500/20 text-yellow-400 border-yellow-400">Pausen</Badge>
+                <span className="bg-yellow-500/20 text-yellow-400 border border-yellow-400 rounded px-2 py-0.5 text-xs font-bold">Pausen</span>
               </div>
               <ul className="space-y-1">
-                {pauses.map((p: Pause) => (
+                {pauses.map((p) => (
                   <li key={p.id} className="text-slate-400 text-sm flex items-center gap-2">
                     <span className="font-mono text-yellow-300">{formatTimeHHMM(new Date(p.time))}</span>
                     <span className="text-xs text-yellow-400">{p.label}</span>
@@ -301,8 +292,8 @@ export default function Home() {
               </ul>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
