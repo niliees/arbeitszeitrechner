@@ -131,169 +131,168 @@ export default function Home() {
     return `M${x0},${y0} Q${cx},${cy} ${x1},${y1}`;
   };
 
-  // Render
+  // --- MODERNES UI ---
+  // 1. Startscreen
   if (!started) {
-    // Startscreen
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
-        <div className="w-full max-w-md shadow-2xl border-0 bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur-xl rounded-2xl">
-          <div className="p-8 pb-0">
-            <h1 className="text-4xl font-bold text-center text-white tracking-tight mb-6">Arbeitszeit Rechner</h1>
-            <label className="block text-sm font-medium text-slate-300 mb-2 uppercase tracking-wide">Startzeit</label>
-            <input
-              type="time"
-              value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
-              className="w-full px-6 py-4 text-2xl font-medium text-white bg-slate-900/70 border border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 mb-6"
-            />
-          </div>
-          <div className="p-8 pt-0">
+      <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-slate-200 to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 transition-colors">
+        <section className="card max-w-lg w-full mx-auto animate-slide-down">
+          <header className="mb-8 text-center">
+            <h1 className="text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-2">Arbeitszeit</h1>
+            <p className="text-slate-500 dark:text-slate-400 text-lg">Dein smarter Tagesbegleiter</p>
+          </header>
+          <form className="flex flex-col gap-6" onSubmit={e => { e.preventDefault(); if (startTime) setStarted(true); }}>
+            <label className="flex flex-col gap-2">
+              <span className="text-slate-600 dark:text-slate-300 text-sm font-semibold uppercase tracking-widest">Startzeit</span>
+              <input
+                type="time"
+                value={startTime}
+                onChange={e => setStartTime(e.target.value)}
+                className="w-full px-6 py-4 text-2xl font-semibold text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 shadow-sm"
+                required
+              />
+            </label>
             <button
-              onClick={() => startTime && setStarted(true)}
+              type="submit"
               disabled={!startTime}
-              className="w-full text-lg py-3 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 disabled:cursor-not-allowed text-white font-medium transition-all duration-200"
+              className="w-full py-4 rounded-xl text-lg font-bold bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:text-slate-400 disabled:cursor-not-allowed text-white shadow-lg transition-all duration-200"
             >
-              Start
+              Starten
             </button>
-          </div>
-        </div>
-      </div>
+          </form>
+        </section>
+      </main>
     );
   }
 
-  // Timeline-Ansicht
+  // 2. Timeline-Ansicht
   const timeline = getTimelineData();
   if (!timeline) return null;
   const width = 700;
   const height = 220;
   const startDate = new Date(timeline.startAt);
   const endDate = new Date(timeline.endAt);
-  // Marker für Start, Ende, Pausen, Jetzt
   const startPos = getPosition(timeline.startAt, timeline);
   const endPos = getPosition(timeline.endAt, timeline);
   const nowPos = getPosition(now, timeline);
   const overtimePos = showOvertime ? getPosition(now, timeline) : null;
-  // Pausen-Positionen
-  const pauseMarkers = pauses.map((p) => ({
-    ...p,
-    pos: getPosition(p.time, timeline)
-  }));
+  const pauseMarkers = pauses.map((p) => ({ ...p, pos: getPosition(p.time, timeline) }));
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
-      <div className="w-full max-w-4xl shadow-2xl border-0 bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur-xl rounded-2xl">
-        <div className="flex flex-row items-center justify-between gap-4 p-8 pb-0">
-          <h2 className="text-3xl font-bold text-white">Arbeitszeit Timeline</h2>
+    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-slate-200 to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 transition-colors">
+      <section className="card max-w-5xl w-full mx-auto animate-slide-down flex flex-col gap-8">
+        <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-2">
+          <div>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-1">Arbeitszeit Timeline</h2>
+            <p className="text-slate-500 dark:text-slate-400 text-base md:text-lg">Behalte deinen Tag im Blick</p>
+          </div>
           <button
             onClick={handleAddPauseClick}
-            className="bg-yellow-500 hover:bg-yellow-600 text-white font-medium px-4 py-2 rounded-lg text-base shadow-lg"
+            className="px-6 py-3 rounded-xl bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-bold text-base shadow-md transition-all duration-200"
           >
-            Pause hinzufügen
+            + Pause eintragen
           </button>
-        </div>
-        <div className="p-8 pt-0">
-          {/* Pausenformular als Dialog */}
-          {showPauseForm && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-              <div className="bg-slate-900 border border-slate-700 rounded-xl p-8 w-full max-w-xs shadow-2xl">
-                <h3 className="text-lg font-bold text-white mb-4">Pausenzeit wählen</h3>
-                <input
-                  type="time"
-                  value={pauseTime}
-                  onChange={(e) => setPauseTime(e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg bg-slate-900 text-white border border-slate-700 mb-4"
-                />
-                <div className="flex gap-2 justify-end">
-                  <button
-                    onClick={handlePauseSave}
-                    disabled={!pauseTime}
-                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg disabled:bg-slate-700"
-                  >
-                    Speichern
-                  </button>
-                  <button
-                    onClick={() => setShowPauseForm(false)}
-                    className="bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded-lg"
-                  >
-                    Abbrechen
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Timeline SVG */}
-          <div className="relative flex flex-col items-center mt-2 mb-8">
-            <svg width={width} height={height} className="block mx-auto">
-              {/* Kurvige Linie */}
-              <path d={getCurvePath(width, height)} stroke="#64748b" strokeWidth={7} fill="none" />
-              {/* Startpunkt */}
-              <circle cx={startPos * width} cy={height * 0.7} r={16} fill="#2563eb" stroke="#fff" strokeWidth={4} />
-              {/* Endpunkt */}
-              <circle cx={endPos * width} cy={height * 0.7} r={16} fill="#a21caf" stroke="#fff" strokeWidth={4} />
-              {/* Pausenmarker */}
-              {pauseMarkers.map((p) => (
-                <g key={p.id}>
-                  <circle cx={p.pos * width} cy={height * 0.7 - 35} r={12} fill="#facc15" stroke="#fff" strokeWidth={3} />
-                  <text x={p.pos * width} y={height * 0.7 - 50} textAnchor="middle" fontSize={14} fill="#facc15" fontWeight="bold">{p.label}</text>
-                </g>
-              ))}
-              {/* Jetzt-Pfeil (Google Maps Stil) */}
-              <g transform={`translate(${nowPos * width},${height * 0.7 - 25})`}>
-                <polygon points="0,0 13,38 -13,38" fill="#38bdf8" stroke="#0ea5e9" strokeWidth={3} />
-              </g>
-              {/* Überzeitbereich */}
-              {showOvertime && overtimePos && (
-                <rect x={width * 0.5} y={height * 0.7 - 10} width={width * (overtimePos - 0.5)} height={20} fill="#22c55e" opacity={0.18} />
-              )}
-            </svg>
-            <div className="flex justify-between w-full px-2 mt-2">
-              <div className="text-left">
-                <div className="text-slate-400 text-xs uppercase">Start</div>
-                <div className="text-white font-mono text-lg">{formatTimeHHMM(startDate)}</div>
-              </div>
-              <div className="text-center">
-                {showOvertime ? (
-                  <>
-                    <div className="text-slate-400 text-xs uppercase">Ende</div>
-                    <div className="text-white font-mono text-lg">{formatTimeHHMM(endDate)}</div>
-                  </>
-                ) : null}
-              </div>
-              <div className="text-right">
-                {showOvertime ? (
-                  <>
-                    <div className="text-green-400 text-xs uppercase">+ Zeit</div>
-                    <div className="text-green-400 font-mono text-lg">+{formatHMS(Math.floor((now - timeline.endAt) / 1000))}</div>
-                  </>
-                ) : (
-                  <>
-                    <div className="text-slate-400 text-xs uppercase">Ende</div>
-                    <div className="text-white font-mono text-lg">{formatTimeHHMM(endDate)}</div>
-                  </>
-                )}
+        </header>
+        {/* Pausenformular als Dialog */}
+        {showPauseForm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 animate-slide-down">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-8 w-full max-w-xs shadow-2xl">
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">Pausenzeit eintragen</h3>
+              <input
+                type="time"
+                value={pauseTime}
+                onChange={e => setPauseTime(e.target.value)}
+                className="w-full px-4 py-3 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 mb-4 text-lg font-semibold"
+                required
+              />
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={handlePauseSave}
+                  disabled={!pauseTime}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-bold disabled:bg-slate-300 disabled:text-slate-400"
+                >
+                  Speichern
+                </button>
+                <button
+                  onClick={() => setShowPauseForm(false)}
+                  className="bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-white px-5 py-2.5 rounded-lg font-bold"
+                >
+                  Abbrechen
+                </button>
               </div>
             </div>
           </div>
-
-          {/* Pausenliste */}
-          {pauses.length > 0 && (
-            <div className="mt-8 bg-slate-800/60 rounded-xl p-4 shadow-xl">
-              <div className="text-slate-300 font-semibold mb-2 flex items-center gap-2">
-                <span className="bg-yellow-500/20 text-yellow-400 border border-yellow-400 rounded px-2 py-0.5 text-xs font-bold">Pausen</span>
-              </div>
-              <ul className="space-y-1">
-                {pauses.map((p) => (
-                  <li key={p.id} className="text-slate-400 text-sm flex items-center gap-2">
-                    <span className="font-mono text-yellow-300">{formatTimeHHMM(new Date(p.time))}</span>
-                    <span className="text-xs text-yellow-400">{p.label}</span>
-                  </li>
-                ))}
-              </ul>
+        )}
+        {/* Timeline SVG */}
+        <div className="relative flex flex-col items-center mt-2 mb-8">
+          <svg width={width} height={height} className="block mx-auto animate-fade-in">
+            {/* Kurvige Linie */}
+            <path d={getCurvePath(width, height)} stroke="#64748b" strokeWidth={7} fill="none" />
+            {/* Startpunkt */}
+            <circle cx={startPos * width} cy={height * 0.7} r={18} fill="#2563eb" stroke="#fff" strokeWidth={5} className="timeline-marker animate-pulse-slow" />
+            {/* Endpunkt */}
+            <circle cx={endPos * width} cy={height * 0.7} r={18} fill="#a21caf" stroke="#fff" strokeWidth={5} className="timeline-marker animate-pulse-slow" />
+            {/* Pausenmarker */}
+            {pauseMarkers.map((p) => (
+              <g key={p.id} className="timeline-pause animate-bounce-slow">
+                <circle cx={p.pos * width} cy={height * 0.7 - 38} r={13} fill="#facc15" stroke="#fff" strokeWidth={3} />
+                <text x={p.pos * width} y={height * 0.7 - 55} textAnchor="middle" fontSize={15} fill="#facc15" fontWeight="bold">{p.label}</text>
+              </g>
+            ))}
+            {/* Jetzt-Pfeil (Google Maps Stil) */}
+            <g transform={`translate(${nowPos * width},${height * 0.7 - 28})`} className="timeline-arrow animate-bounce-slow">
+              <polygon points="0,0 15,44 -15,44" fill="#38bdf8" stroke="#0ea5e9" strokeWidth={4} />
+            </g>
+            {/* Überzeitbereich */}
+            {showOvertime && overtimePos && (
+              <rect x={width * 0.5} y={height * 0.7 - 12} width={width * (overtimePos - 0.5)} height={24} fill="#22c55e" opacity={0.18} />
+            )}
+          </svg>
+          <div className="flex justify-between w-full px-2 mt-4">
+            <div className="text-left">
+              <div className="text-slate-400 text-xs uppercase">Start</div>
+              <div className="text-slate-900 dark:text-white font-mono text-xl font-bold">{formatTimeHHMM(startDate)}</div>
             </div>
-          )}
+            <div className="text-center">
+              {showOvertime ? (
+                <>
+                  <div className="text-slate-400 text-xs uppercase">Ende</div>
+                  <div className="text-slate-900 dark:text-white font-mono text-xl font-bold">{formatTimeHHMM(endDate)}</div>
+                </>
+              ) : null}
+            </div>
+            <div className="text-right">
+              {showOvertime ? (
+                <>
+                  <div className="text-green-400 text-xs uppercase">+ Zeit</div>
+                  <div className="text-green-400 font-mono text-xl font-bold">+{formatHMS(Math.floor((now - timeline.endAt) / 1000))}</div>
+                </>
+              ) : (
+                <>
+                  <div className="text-slate-400 text-xs uppercase">Ende</div>
+                  <div className="text-slate-900 dark:text-white font-mono text-xl font-bold">{formatTimeHHMM(endDate)}</div>
+                </>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+        {/* Pausenliste */}
+        {pauses.length > 0 && (
+          <div className="mt-2 bg-slate-100 dark:bg-slate-800/60 rounded-xl p-6 shadow-xl animate-fade-in">
+            <div className="text-slate-700 dark:text-slate-200 font-semibold mb-3 flex items-center gap-2">
+              <span className="bg-yellow-400/20 text-yellow-700 dark:text-yellow-300 border border-yellow-300 rounded px-2 py-0.5 text-xs font-bold">Pausen</span>
+            </div>
+            <ul className="space-y-2">
+              {pauses.map((p) => (
+                <li key={p.id} className="text-slate-600 dark:text-slate-300 text-base flex items-center gap-2">
+                  <span className="font-mono text-yellow-500 dark:text-yellow-300 text-lg">{formatTimeHHMM(new Date(p.time))}</span>
+                  <span className="text-xs text-yellow-700 dark:text-yellow-300">{p.label}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </section>
+    </main>
   );
 }
