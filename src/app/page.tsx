@@ -106,7 +106,7 @@ export default function Home() {
   if (!started) {
     return (
       <main className="min-h-screen flex items-center justify-center">
-        <section className="card max-w-xl w-full mx-4 animate-fade-in">
+        <section className="card w-full full-bleed animate-fade-in">
           <div className="app-header mb-6">
             <div className="brand">
               <div className="logo">AZ</div>
@@ -139,7 +139,7 @@ export default function Home() {
   // Timeline view
   const timeline = getTimelineData();
   if (!timeline) return null;
-  const width = Math.min(900, Math.max(360, Math.floor(window?.innerWidth * 0.85 || 700)));
+  const width = (typeof window !== 'undefined') ? Math.max(360, window.innerWidth - 20) : 700;
   const height = 200;
   const startDate = new Date(timeline.startAt);
   const endDate = new Date(timeline.endAt);
@@ -151,7 +151,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen flex items-start justify-center py-10">
-      <section className="card w-full max-w-5xl mx-4 space-y-6">
+      <section className="card w-full full-bleed space-y-6">
         <div className="app-header">
           <div className="brand">
             <div className="logo">AZ</div>
