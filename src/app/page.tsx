@@ -297,7 +297,7 @@ export default function Home() {
                           {countdown.timeRemaining}
                         </p>
                       </div>
-                    )}
+                    )
                   </div>
                 </div>
               ))}
