@@ -5,19 +5,25 @@ import { useState, useEffect } from "react";
 interface Countdown {
   id: string;
   type: 'min' | 'max';
-  targetTime: string;
-  timeRemaining: string;
-  isFinished: boolean;
+  targetTime: string;     // Anzeige (HH:MM)
+  targetAt: number;       // Timestamp (ms)
+  timeRemaining: string;  // "HH:MM:SS" oder "+HH:MM:SS"
+  isFinished: boolean;    // nur für max relevant
+  isOvertime?: boolean;   // nur für min relevant
 }
 
 export default function Home() {
   const [startTime, setStartTime] = useState("");
   const [minEndTime, setMinEndTime] = useState("");
   const [maxEndTime, setMaxEndTime] = useState("");
+
+  const [minEndAt, setMinEndAt] = useState<number | null>(null);
+  const [maxEndAt, setMaxEndAt] = useState<number | null>(null);
+
   const [countdowns, setCountdowns] = useState<Countdown[]>([]);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  const formatTime = (date: Date) => {
+  const formatTimeHHMM = (date: Date) => {
     return date.toLocaleTimeString('de-DE', {
       hour: '2-digit',
       minute: '2-digit',
@@ -25,10 +31,17 @@ export default function Home() {
     });
   };
 
+  const formatHMS = (totalSeconds: number) => {
+    const sec = Math.floor(Math.abs(totalSeconds));
+    const h = String(Math.floor(sec / 3600)).padStart(2, '0');
+    const m = String(Math.floor((sec % 3600) / 60)).padStart(2, '0');
+    const s = String(sec % 60).padStart(2, '0');
+    return `${h}:${m}:${s}`;
+  };
+
   // Calculate end times when start time changes
   useEffect(() => {
     if (startTime) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsAnimating(true);
       const timer = setTimeout(() => setIsAnimating(false), 500);
 
@@ -38,17 +51,22 @@ export default function Home() {
 
       // Minimum: 7.6 Stunden Arbeit + 30 Min Pause = 8.1 Stunden
       const minDate = new Date(startDate.getTime() + (7.6 * 60 + 30) * 60 * 1000);
-      
+
       // Maximum: 9 Stunden Arbeit + 30 Min Pause = 9.5 Stunden
       const maxDate = new Date(startDate.getTime() + (9 * 60 + 30) * 60 * 1000);
 
-      setMinEndTime(formatTime(minDate));
-      setMaxEndTime(formatTime(maxDate));
+      setMinEndAt(minDate.getTime());
+      setMaxEndAt(maxDate.getTime());
+
+      setMinEndTime(formatTimeHHMM(minDate));
+      setMaxEndTime(formatTimeHHMM(maxDate));
 
       return () => clearTimeout(timer);
     } else {
       setMinEndTime("");
       setMaxEndTime("");
+      setMinEndAt(null);
+      setMaxEndAt(null);
       setCountdowns([]);
     }
   }, [startTime]);
@@ -59,25 +77,33 @@ export default function Home() {
 
     const interval = setInterval(() => {
       setCountdowns(prev => prev.map(countdown => {
-        const now = new Date();
-        const [targetHours, targetMinutes] = countdown.targetTime.split(':').map(Number);
-        const targetDate = new Date();
-        targetDate.setHours(targetHours, targetMinutes, 0, 0);
+        const now = Date.now();
+        const diffMs = countdown.targetAt - now;
 
-        const diff = targetDate.getTime() - now.getTime();
+        // Abgelaufen
+        if (diffMs <= 0) {
+          // Mindestzeit: ins Plus zählen
+          if (countdown.type === 'min') {
+            const overtimeSec = Math.floor((now - countdown.targetAt) / 1000);
+            return {
+              ...countdown,
+              timeRemaining: `+${formatHMS(overtimeSec)}`,
+              isFinished: false,
+              isOvertime: true,
+            };
+          }
 
-        if (diff <= 0) {
-          return { ...countdown, timeRemaining: '00:00:00', isFinished: true };
+          // Maximalzeit: bleibt "Fertig"
+          return { ...countdown, timeRemaining: '00:00:00', isFinished: true, isOvertime: false };
         }
 
-        const hoursLeft = Math.floor(diff / (1000 * 60 * 60));
-        const minutesLeft = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const secondsLeft = Math.floor((diff % (1000 * 60)) / 1000);
-
+        // Läuft noch: normaler Countdown
+        const secondsLeft = Math.floor(diffMs / 1000);
         return {
           ...countdown,
-          timeRemaining: `${String(hoursLeft).padStart(2, '0')}:${String(minutesLeft).padStart(2, '0')}:${String(secondsLeft).padStart(2, '0')}`,
+          timeRemaining: formatHMS(secondsLeft),
           isFinished: false,
+          isOvertime: false,
         };
       }));
     }, 1000);
@@ -86,17 +112,27 @@ export default function Home() {
   }, [countdowns.length]);
 
   const startCountdown = (type: 'min' | 'max') => {
-    const targetTime = type === 'min' ? minEndTime : maxEndTime;
     const existingCountdown = countdowns.find(c => c.type === type);
-    
-    if (existingCountdown) return; // Already exists
+    if (existingCountdown) return;
+
+    const targetAt = type === 'min' ? minEndAt : maxEndAt;
+    const targetTime = type === 'min' ? minEndTime : maxEndTime;
+
+    if (!targetAt || !targetTime) return;
+
+    const now = Date.now();
+    const diffMs = targetAt - now;
 
     const countdown: Countdown = {
       id: Date.now().toString(),
       type,
       targetTime,
-      timeRemaining: '00:00:00',
-      isFinished: false,
+      targetAt,
+      timeRemaining: diffMs <= 0
+        ? (type === 'min' ? `+${formatHMS(Math.floor((now - targetAt) / 1000))}` : '00:00:00')
+        : formatHMS(Math.floor(diffMs / 1000)),
+      isFinished: diffMs <= 0 && type === 'max',
+      isOvertime: diffMs <= 0 && type === 'min',
     };
 
     setCountdowns([...countdowns, countdown]);
@@ -253,7 +289,9 @@ export default function Home() {
                       </div>
                     ) : (
                       <div>
-                        <p className="text-slate-400 text-xs uppercase tracking-wider mb-2">Verbleibende Zeit</p>
+                        <p className="text-slate-400 text-xs uppercase tracking-wider mb-2">
+                          {countdown.isOvertime ? 'Überzeit' : 'Verbleibende Zeit'}
+                        </p>
                         <p className="text-white font-bold text-5xl font-mono tracking-wider">
                           {countdown.timeRemaining}
                         </p>
