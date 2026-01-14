@@ -1,10 +1,10 @@
 
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 
 import { HorizontalTimeline } from "../components/HorizontalTimeline";
 
-function TimeInput({ label, value, onChange, readOnly = false, ...props }: { label: string, value: string, onChange?: (e: any) => void, readOnly?: boolean, [key: string]: any }) {
+function TimeInput({ label, value, onChange, readOnly = false, ...props }: { label: string, value: string, onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void, readOnly?: boolean, [key: string]: unknown }) {
   return (
     <label className="flex flex-col text-base font-semibold text-indigo-900 dark:text-indigo-100">
       <span className="mb-1 text-xs font-bold tracking-wide uppercase text-indigo-400 dark:text-indigo-300">{label}</span>
@@ -41,37 +41,26 @@ function getNowString() {
 
 export default function NewTimelineDemo() {
   const [start, setStart] = useState(getNowString());
-  const [end, setEnd] = useState("");
-  const [now, setNow] = useState(getNowString());
-  const [isOver, setIsOver] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-
-  // Animation: sanftes Einblenden
-  useEffect(() => {
-    document.body.classList.add("animate-fade-in-up");
-    return () => document.body.classList.remove("animate-fade-in-up");
-  }, []);
-
-  useEffect(() => {
-    // Endzeit berechnen (7h36min nach Start)
+  const end = useMemo(() => {
     const [h, m] = start.split(":").map(Number);
     const startDate = new Date();
     startDate.setHours(h, m, 0, 0);
     const endDate = new Date(startDate.getTime() + (7 * 60 + 36) * 60 * 1000);
-    setEnd(`${pad(endDate.getHours())}:${pad(endDate.getMinutes())}`);
+    return `${pad(endDate.getHours())}:${pad(endDate.getMinutes())}`;
   }, [start]);
+  const [now, setNow] = useState(getNowString());
+  const isOver = useMemo(() => {
+    if (!end) return false;
+    const [eh, em] = end.split(":").map(Number);
+    const [nh, nm] = now.split(":").map(Number);
+    return nh > eh || (nh === eh && nm >= em);
+  }, [now, end]);
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     const id = setInterval(() => setNow(getNowString()), 1000);
     return () => clearInterval(id);
   }, []);
-
-  useEffect(() => {
-    if (!end) return;
-    const [eh, em] = end.split(":").map(Number);
-    const [nh, nm] = now.split(":").map(Number);
-    setIsOver(nh > eh || (nh === eh && nm >= em));
-  }, [now, end]);
 
   return (
     <div className="w-full flex flex-col items-center animate-fade-in-up">

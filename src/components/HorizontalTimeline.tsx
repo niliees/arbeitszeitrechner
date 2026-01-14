@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useMemo } from "react";
 
 interface TimelineProps {
   start: string;
@@ -9,18 +9,15 @@ interface TimelineProps {
 
 export const HorizontalTimeline: React.FC<TimelineProps> = ({ start, end, now, isOver }) => {
   // Animation für Marker
-  const [progress, setProgress] = useState(0);
-  const timelineRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!timelineRef.current) return;
+  const progress = useMemo(() => {
     const startTime = new Date(`1970-01-01T${start}:00`).getTime();
     const endTime = new Date(`1970-01-01T${end}:00`).getTime();
     const nowTime = new Date(`1970-01-01T${now}:00`).getTime();
     const total = endTime - startTime;
     const elapsed = Math.min(Math.max(nowTime - startTime, 0), total);
-    setProgress(total > 0 ? elapsed / total : 0);
+    return total > 0 ? elapsed / total : 0;
   }, [start, end, now]);
+  const timelineRef = useRef<HTMLDivElement>(null);
 
   return (
     <div className="w-full flex flex-col items-center">
