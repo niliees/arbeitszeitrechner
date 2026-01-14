@@ -1,3 +1,4 @@
+
 import React from "react";
 
 interface HeaderProps {
@@ -7,14 +8,14 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ title, subtitle, children }) => (
-  <div className="app-header mb-6">
+  <header className="app-header fade-in-scale shadow-soft">
     <div className="brand">
-      <div className="logo">AZ</div>
+      <span className="icon animate-fade-in-up" aria-label="Logo" style={{fontFamily:'monospace',fontWeight:900}}>⏰</span>
       <div>
-        <h1 className="text-2xl font-extrabold">{title}</h1>
-        {subtitle && <div className="muted text-sm">{subtitle}</div>}
+        <h1 className="text-2xl font-extrabold tracking-tight text-primary mb-1 animate-fade-in-up">{title}</h1>
+        {subtitle && <div className="muted text-sm animate-fade-in-up">{subtitle}</div>}
       </div>
     </div>
-    <div className="controls">{children}</div>
-  </div>
+    <nav className="controls">{children}</nav>
+  </header>
 );
