@@ -1,6 +1,34 @@
+
 "use client";
 import { useEffect, useState } from "react";
+
 import { HorizontalTimeline } from "../components/HorizontalTimeline";
+
+function TimeInput({ label, value, onChange, readOnly = false, ...props }: { label: string, value: string, onChange?: (e: any) => void, readOnly?: boolean, [key: string]: any }) {
+  return (
+    <label className="flex flex-col text-base font-semibold text-indigo-900 dark:text-indigo-100">
+      <span className="mb-1 text-xs font-bold tracking-wide uppercase text-indigo-400 dark:text-indigo-300">{label}</span>
+      <input
+        type="time"
+        value={value}
+        onChange={onChange}
+        readOnly={readOnly}
+        className={`mt-1 px-5 py-3 rounded-xl border-2 border-indigo-200 dark:border-indigo-700 ${readOnly ? 'bg-gray-100 dark:bg-indigo-900 cursor-not-allowed opacity-80' : 'bg-white dark:bg-indigo-950'} text-xl font-mono shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-all duration-200 hover:border-blue-400`}
+        aria-label={label}
+        {...props}
+      />
+    </label>
+  );
+}
+
+function TimeDisplay({ label, value }: { label: string, value: string }) {
+  return (
+    <div className="flex flex-col items-center">
+      <span className="text-xs text-gray-400 dark:text-gray-500 mb-1 font-semibold tracking-wide uppercase">{label}</span>
+      <span className="text-3xl font-mono font-extrabold text-indigo-700 dark:text-indigo-200 drop-shadow-lg animate-pulse-slow">{value}</span>
+    </div>
+  );
+}
 
 function pad(n: number) {
   return n.toString().padStart(2, "0");
@@ -12,11 +40,17 @@ function getNowString() {
 }
 
 export default function NewTimelineDemo() {
-  // Demo: Startzeit ist jetzt, Endzeit +7:36h
   const [start, setStart] = useState(getNowString());
   const [end, setEnd] = useState("");
   const [now, setNow] = useState(getNowString());
   const [isOver, setIsOver] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+
+  // Animation: sanftes Einblenden
+  useEffect(() => {
+    document.body.classList.add("animate-fade-in-up");
+    return () => document.body.classList.remove("animate-fade-in-up");
+  }, []);
 
   useEffect(() => {
     // Endzeit berechnen (7h36min nach Start)
@@ -40,32 +74,29 @@ export default function NewTimelineDemo() {
   }, [now, end]);
 
   return (
-    <div className="w-full flex flex-col items-center">
-      <div className="mb-8 w-full max-w-2xl flex flex-col md:flex-row gap-4 md:gap-8 items-center justify-center">
-        <label className="flex flex-col text-sm font-semibold text-indigo-800 dark:text-indigo-200">
-          Startzeit
-          <input
-            type="time"
-            value={start}
-            onChange={e => setStart(e.target.value)}
-            className="mt-1 px-3 py-2 rounded-lg border border-indigo-200 dark:border-indigo-700 bg-white dark:bg-indigo-950 text-lg font-mono shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-          />
-        </label>
-        <div className="flex flex-col items-center">
-          <span className="text-xs text-gray-500 dark:text-gray-400 mb-1">Aktuelle Zeit</span>
-          <span className="text-2xl font-mono font-bold text-indigo-700 dark:text-indigo-200">{now}</span>
-        </div>
-        <label className="flex flex-col text-sm font-semibold text-indigo-800 dark:text-indigo-200">
-          Endzeit
-          <input
-            type="time"
-            value={end}
-            readOnly
-            className="mt-1 px-3 py-2 rounded-lg border border-indigo-200 dark:border-indigo-700 bg-gray-100 dark:bg-indigo-900 text-lg font-mono shadow-sm cursor-not-allowed"
-          />
-        </label>
+    <div className="w-full flex flex-col items-center animate-fade-in-up">
+      <div className="mb-10 w-full max-w-2xl flex flex-col md:flex-row gap-6 md:gap-12 items-center justify-center">
+        <TimeInput label="Startzeit" value={start} onChange={e => setStart(e.target.value)} />
+        <TimeDisplay label="Aktuelle Zeit" value={now} />
+        <TimeInput label="Endzeit" value={end} readOnly />
       </div>
-      <HorizontalTimeline start={start} end={end} now={now} isOver={isOver} />
+      <div className="w-full max-w-3xl">
+        <HorizontalTimeline start={start} end={end} now={now} isOver={isOver} />
+      </div>
+      <button
+        className="btn btn-ghost mt-10 text-base px-6 py-3 rounded-xl border border-indigo-200 dark:border-indigo-700 shadow-sm hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200"
+        onClick={() => setShowSettings(s => !s)}
+        aria-expanded={showSettings}
+        aria-controls="timeline-settings"
+      >
+        {showSettings ? "Einstellungen ausblenden" : "Erweiterte Einstellungen"}
+      </button>
+      {showSettings && (
+        <div id="timeline-settings" className="mt-6 w-full max-w-xl p-6 rounded-2xl bg-white/80 dark:bg-indigo-950/80 shadow-xl border border-indigo-100 dark:border-indigo-800 animate-fade-in-up">
+          <div className="text-lg font-bold mb-2 text-indigo-700 dark:text-indigo-200">(Platz für weitere Optionen)</div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">Hier könnten z.B. Pausen, andere Arbeitszeitmodelle oder Exportfunktionen ergänzt werden.</div>
+        </div>
+      )}
     </div>
   );
 }
