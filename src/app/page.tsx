@@ -1,5 +1,6 @@
 
 
+"use client";
 import dynamic from "next/dynamic";
 const NewTimelineDemo = dynamic(() => import("./NewTimelineDemo"), { ssr: false });
 
