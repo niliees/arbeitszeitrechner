@@ -25,10 +25,27 @@ export default function Home() {
     });
   };
 
-  // Calculate end times when start time changes
+  // LocalStorage-Keys
+  const todayKey = `arbeitszeitrechner_startzeit_${new Date().toISOString().slice(0, 10)}`;
+  const lastKey = `arbeitszeitrechner_last_startzeit`;
+
+  // Startzeit beim Laden aus localStorage holen
+  useEffect(() => {
+    const storedToday = localStorage.getItem(todayKey);
+    if (storedToday) {
+      setStartTime(storedToday);
+    } else {
+      const last = localStorage.getItem(lastKey);
+      if (last) setStartTime(last);
+    }
+  }, []);
+
+  // Startzeit speichern, wenn sie sich ändert
   useEffect(() => {
     if (startTime) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
+      localStorage.setItem(todayKey, startTime);
+      localStorage.setItem(lastKey, startTime);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsAnimating(true);
       const timer = setTimeout(() => setIsAnimating(false), 500);
 
